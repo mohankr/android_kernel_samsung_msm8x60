@@ -322,10 +322,11 @@ static int msm_vb2_mem_ops_mmap(void *buf_priv, struct vm_area_struct *vma)
 	vma->vm_ops = &videobuf2_vm_ops;
 	vma->vm_flags |= VM_DONTEXPAND;
 	vma->vm_private_data = mem;
-
+#if 0
 	D("mmap %p: %08lx-%08lx (%lx) pgoff %08lx\n",
 		map, vma->vm_start, vma->vm_end,
 		(long int)mem->bsize, vma->vm_pgoff);
+#endif /* BUG */
 	videobuf2_vm_open(vma);
 	return 0;
 error:
