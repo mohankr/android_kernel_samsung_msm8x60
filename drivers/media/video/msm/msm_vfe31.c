@@ -341,6 +341,8 @@ static void vfe_addr_convert(struct msm_vfe_phy_info *pinfo,
 			((struct vfe_message *)data)->_u.msgOut.yBuffer;
 		pinfo->cbcr_phy =
 			((struct vfe_message *)data)->_u.msgOut.cbcrBuffer;
+		pinfo->p2_phy =
+			((struct vfe_message *)data)->_u.msgOut.p2_addr;
 
 		pinfo->frame_id =
 		((struct vfe_message *)data)->_u.msgOut.frameCounter;

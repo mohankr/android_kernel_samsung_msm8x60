@@ -178,7 +178,7 @@
 	_IOR(MSM_CAM_IOCTL_MAGIC, 49, struct v4l2_queryctrl)
 
 #define MSM_CAM_IOCTL_GET_KERNEL_SYSTEM_TIME \
-	_IOW(MSM_CAM_IOCTL_MAGIC, 53, struct timeval *)
+	_IOW(MSM_CAM_IOCTL_MAGIC, 50, struct timeval *)
 
 #define MSM_CAM_IOCTL_SET_VFE_OUTPUT_TYPE \
 	_IOW(MSM_CAM_IOCTL_MAGIC, 51, uint32_t *)
@@ -354,6 +354,7 @@ struct msm_isp_event_ctrl {
 #define MSM_CAM_RESP_MAX               8
 
 #define MSM_CAM_APP_NOTIFY_EVENT  0
+#define MSM_CAM_APP_NOTIFY_ERROR_EVENT  1
 
 /* this one is used to send ctrl/status up to config thread */
 
@@ -509,6 +510,9 @@ struct msm_pmem_info {
 	uint32_t len;
 	uint32_t y_off;
 	uint32_t cbcr_off;
+	uint32_t planar0_off;
+	uint32_t planar1_off;
+	uint32_t planar2_off;
 	uint8_t active;
 };
 
@@ -532,8 +536,9 @@ struct outputCfg {
 #define OUTPUT_2_AND_CAMIF_TO_AXI_VIA_OUTPUT_1 6
 #define OUTPUT_1_2_AND_3 7
 #define OUTPUT_ALL_CHNLS 8
-#define OUTPUT_ZSL_ALL_CHNLS 9
-#define LAST_AXI_OUTPUT_MODE_ENUM  OUTPUT_ZSL_ALL_CHNLS
+#define OUTPUT_VIDEO_ALL_CHNLS 9
+#define OUTPUT_ZSL_ALL_CHNLS 10
+#define LAST_AXI_OUTPUT_MODE_ENUM  = OUTPUT_ZSL_ALL_CHNLS
 
 #define OUTPUT_PRIM		0xF1
 #define OUTPUT_PRIM_ALL_CHNLS	0xF2
@@ -579,6 +584,9 @@ struct msm_frame {
 	uint32_t phy_offset;
 	uint32_t y_off;
 	uint32_t cbcr_off;
+	uint32_t planar0_off;
+	uint32_t planar1_off;
+	uint32_t planar2_off;
 	int fd;
 
 	void *cropinfo;
@@ -646,6 +654,8 @@ struct msm_stats_buf {
 	uint32_t status_bits;
 	unsigned long buffer;
 	int fd;
+	int length;
+	struct ion_handle *handle;
 	uint32_t frame_id;
 };
 #define MSM_V4L2_EXT_CAPTURE_MODE_DEFAULT 0
@@ -1271,6 +1281,10 @@ struct msm_actuator_get_info_t {
 	uint32_t f_pix_den;
 	uint32_t total_f_dist_num;
 	uint32_t total_f_dist_den;
+	uint32_t hor_view_angle_num;
+	uint32_t hor_view_angle_den;
+	uint32_t ver_view_angle_num;
+	uint32_t ver_view_angle_den;
 };
 
 struct msm_actuator_cfg_data {

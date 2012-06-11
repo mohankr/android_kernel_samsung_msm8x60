@@ -844,6 +844,7 @@ struct vfe_msg_output {
 	uint8_t   output_id;
 	uint32_t  yBuffer;
 	uint32_t  cbcrBuffer;
+	uint32_t  p2_addr;
 	struct vfe_frame_bpc_info bpcInfo;
 	struct vfe_frame_asf_info asfInfo;
 	uint32_t  frameCounter;
@@ -879,6 +880,8 @@ struct vfe31_free_buf {
 	struct list_head node;
 	uint32_t paddr;
 	uint32_t y_off;
+	uint32_t planar1_off;
+	uint32_t planar2_off;
 	uint32_t cbcr_off;
 };
 

@@ -24,7 +24,6 @@
 #include <mach/msm_bus.h>
 #include <mach/msm_bus_board.h>
 
-#include <linux/kernel.h>
 
 /* MIPI	CSI	controller registers */
 #define	MIPI_PHY_CONTROL			0x00000000

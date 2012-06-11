@@ -86,6 +86,15 @@ static int vpe_reset(void)
 {
 	uint32_t vpe_version;
 	uint32_t rc = 0;
+	unsigned long flags = 0;
+
+	spin_lock_irqsave(&vpe_ctrl->lock, flags);
+	if (vpe_ctrl->state == VPE_STATE_IDLE) {
+		CDBG("%s: VPE already disabled.", __func__);
+		spin_unlock_irqrestore(&vpe_ctrl->lock, flags);
+		return rc;
+	}
+	spin_unlock_irqrestore(&vpe_ctrl->lock, flags);
 
 	vpe_reset_state_variables();
 	vpe_version = msm_io_r(vpe_ctrl->vpebase + VPE_HW_VERSION_OFFSET);
@@ -529,14 +538,14 @@ int vpe_disable(void)
 	}
 	spin_unlock_irqrestore(&vpe_ctrl->lock, flags);
 
+	disable_irq(vpe_ctrl->vpeirq->start);
+	tasklet_kill(&vpe_tasklet);
 	msm_cam_clk_enable(&vpe_ctrl->pdev->dev, vpe_clk_info,
 			vpe_ctrl->vpe_clk, ARRAY_SIZE(vpe_clk_info), 0);
 
 	regulator_disable(vpe_ctrl->fs_vpe);
 	regulator_put(vpe_ctrl->fs_vpe);
 	vpe_ctrl->fs_vpe = NULL;
-	disable_irq(vpe_ctrl->vpeirq->start);
-	tasklet_kill(&vpe_tasklet);
 	spin_lock_irqsave(&vpe_ctrl->lock, flags);
 	vpe_ctrl->state = VPE_STATE_IDLE;
 	spin_unlock_irqrestore(&vpe_ctrl->lock, flags);
@@ -668,6 +677,7 @@ static int msm_vpe_resource_init(struct platform_device *pdev)
 /* from this part it is error handling. */
 vpe_unmap_mem_region:
 	iounmap(vpe_ctrl->vpebase);
+	vpe_ctrl->vpebase = NULL;
 	return rc;  /* this rc should have error code. */
 }
 
@@ -679,7 +689,10 @@ void msm_vpe_subdev_release(struct platform_device *pdev)
 		return;
 	}
 
+	vpe_reset();
+	vpe_disable();
 	iounmap(vpe_ctrl->vpebase);
+	vpe_ctrl->vpebase = NULL;
 	atomic_set(&vpe_init_done, 0);
 }
 EXPORT_SYMBOL(msm_vpe_subdev_release);
