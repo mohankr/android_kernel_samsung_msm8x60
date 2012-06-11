@@ -1151,6 +1151,13 @@ void ld9040_disp_on(void)
 			{
 			init_table_info(&(lcd.smart),GAMMA_SmartDimming_VALUE_SET_300cd );
 			ld9040_read_mtp(lcd_mtp_data);
+			printk("MTP_READ");
+			int i;
+			for(i=0;i<LDI_Gamma_CMD_LENGTH;i++)
+			{
+				printk("0x%x ",lcd_mtp_data[i]);
+			}
+			printk("\n");
 			calc_voltage_table(&(lcd.smart), lcd_mtp_data);
 			lcd.isSmartDimming_loaded = TRUE;
 			}
@@ -1163,13 +1170,13 @@ void ld9040_disp_on(void)
 			lcdc_ld9040_set_brightness(18);
 			jump_from_boot=1;
 		}else{
-				if(lcd.current_brightness <= 0)
-				lcdc_ld9040_set_brightness(DFT_BACKLIGHT_VALUE);
-			else
-				lcdc_ld9040_set_brightness(lcd.current_brightness);
+				if(lcd.current_brightness < 0)
+				  lcdc_ld9040_set_brightness(DFT_BACKLIGHT_VALUE);
+			  else
+				  lcdc_ld9040_set_brightness(lcd.current_brightness);
 		}
 		#else
-			if(lcd.current_brightness <= 0)
+			if(lcd.current_brightness < 0)
 				lcdc_ld9040_set_brightness(DFT_BACKLIGHT_VALUE);
 			else
 			 	lcdc_ld9040_set_brightness(lcd.current_brightness);
