@@ -1374,10 +1374,12 @@ static int msm_hsusb_pmic_id_notif_init(void (*callback)(int online), int init)
 		pr_err("%s: USB_ID is not routed to PMIC\n", __func__);
 		return -ENOTSUPP;
 	}
+/*
 	// for test check
 	//#elif defined (CONFIG_KOR_MODEL_SHV_E120L) || defined (CONFIG_KOR_MODEL_SHV_E120S) || defined (CONFIG_KOR_MODEL_SHV_E120K)\
 	//	|| defined (CONFIG_KOR_MODEL_SHV_E160S) || defined (CONFIG_KOR_MODEL_SHV_E160K) || defined (CONFIG_KOR_MODEL_SHV_E160L)
 	//	pr_err("%s: USB_ID is routed to PMIC \n", __func__);
+*/
 #else
 	pr_err("%s: USB_ID is not routed to PMIC\n", __func__);
 	return -ENOTSUPP;
