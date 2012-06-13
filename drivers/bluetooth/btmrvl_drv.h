@@ -77,7 +77,6 @@ struct btmrvl_private {
 				u8 *payload, u16 nb);
 	int (*hw_wakeup_firmware) (struct btmrvl_private *priv);
 	int (*hw_process_int_status) (struct btmrvl_private *priv);
-	int (*hw_process_int_status) (struct btmrvl_private *priv);
 	spinlock_t driver_lock;		/* spinlock used by driver */
 #ifdef CONFIG_DEBUG_FS
 	void *debugfs_data;
@@ -120,13 +119,13 @@ struct btmrvl_cmd {
 	__le16 ocf_ogf;
 	u8 length;
 	u8 data[4];
-} __attribute__ ((packed));
+} __packed;
 
 struct btmrvl_event {
 	u8 ec;		/* event counter */
 	u8 length;
 	u8 data[4];
-} __attribute__ ((packed));
+} __packed;
 
 /* Prototype of global function */
 

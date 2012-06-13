@@ -1753,6 +1753,12 @@ config USA_MODEL_SGH_T989D
                 depends on (USA_MODEL_SGH_T989)
                 default n             
                 bool "USA TMO SGH-T989D"
+
+config BT_MGMT
+	bool "Bluetooth Mgmt"
+	default n
+	help
+	  This is for bluetooth mgmt
         
 choice
 		prompt "JPN Model Name"
@@ -2238,3 +2244,22 @@ config Q1_KOR_AUDIO
 	default n
 	help
 	  Support Q1 KOR AUDIO
+
+if BT
+config BT_CSR8811
+	bool "Enable CSR8811 driver"
+	default n
+
+config BT_BCM4330
+ 	bool "Enable BCM4330 driver"
+ 	default n
+ 	help
+	  Adds BCM4330 RFKILL driver for Broadcom BCM4330 chipset
+
+config BT_BCM4334
+	bool "Enable BCM4334 driver"
+	default n
+	help
+	  Adds BCM4334 RFKILL driver for Broadcom BCM4334 chipset
+endif
+

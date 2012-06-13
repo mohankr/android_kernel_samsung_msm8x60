@@ -1,3 +1,12 @@
+04-0.2-sys-ls.txt
+BUILD_NOTES.TXT
+SEARCH_STRINGS.TXT
+adb_shell_cymb_0.2-script.txt
+adb_shell_ucle2-script.txt
+arch/arm/configs/ucle2_defconfig
+config-0.2
+ucle2-kmsg.txt
+ucle2-sys-class-ls.txt
 setup-kernel-build-env
 .cproject
 .project

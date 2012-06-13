@@ -34,12 +34,7 @@
 
 #define EVENT_CHANNEL		"APPS_RIVA_BT_CMD"
 #define DATA_CHANNEL		"APPS_RIVA_BT_ACL"
-/* release wakelock in 500ms, not immediately, because higher layers
- * don't always take wakelocks when they should
- * This is derived from the implementation for UART transport
- */
-
-#define RX_Q_MONITOR		(500)	/* 500 milli second */
+#define RX_Q_MONITOR		(1)	/* 1 milli second */
 
 
 static int hcismd_set;

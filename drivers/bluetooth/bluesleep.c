@@ -127,8 +127,7 @@ static struct timer_list tx_timer;
 
 /** Lock for state transitions */
 static spinlock_t rw_lock;
-static spinlock_t uart_lock; //for bsi->uport resource protect.
-    
+
 /** Notifier block for HCI events */
 struct notifier_block hci_event_nblock = {
 	.notifier_call = bluesleep_hci_event,
@@ -142,13 +141,9 @@ struct proc_dir_entry *bluetooth_dir, *sleep_dir;
 
 static void hsuart_power(int on)
 {
-	unsigned long irq_flags;
-	spin_lock_irqsave(&uart_lock, irq_flags);
-        
 	if (bsi->uport == NULL )
 	{
 		BT_INFO("hsuart_power...but bsi->uport == NULL , so return");
-		spin_unlock_irqrestore(&uart_lock, irq_flags);                
 		return ;
 	}
 
@@ -160,9 +155,6 @@ static void hsuart_power(int on)
 		msm_hs_set_mctrl(bsi->uport, 0);
 		msm_hs_request_clock_off(bsi->uport);
 	}
-
-	spin_unlock_irqrestore(&uart_lock, irq_flags);                
-	return;   
 }
 
 
@@ -300,7 +292,6 @@ static int bluesleep_hci_event(struct notifier_block *this,
 	struct hci_dev *hdev = (struct hci_dev *) data;
 	struct hci_uart *hu;
 	struct uart_state *state;
-	unsigned long irq_flags;
 
 	if (!hdev)
 		return NOTIFY_DONE;
@@ -311,16 +302,12 @@ static int bluesleep_hci_event(struct notifier_block *this,
 			bluesleep_hdev = hdev;
 			hu  = (struct hci_uart *) hdev->driver_data;
 			state = (struct uart_state *) hu->tty->driver_data;
-			spin_lock_irqsave(&uart_lock, irq_flags);
 			bsi->uport = state->uart_port;
-			spin_unlock_irqrestore(&uart_lock, irq_flags);                
 		}
 		break;
 	case HCI_DEV_UNREG:
-		spin_lock_irqsave(&uart_lock, irq_flags);
 		bluesleep_hdev = NULL;
 		bsi->uport = NULL;
-		spin_unlock_irqrestore(&uart_lock, irq_flags);                
 		break;
 	case HCI_DEV_WRITE:
 		bluesleep_outgoing_data();
@@ -765,8 +752,6 @@ static int __init bluesleep_init(void)
 
 	/* Initialize spinlock. */
 	spin_lock_init(&rw_lock);
-	spin_lock_init(&uart_lock);
-    
 
 	/* Initialize timer */
 	init_timer(&tx_timer);
