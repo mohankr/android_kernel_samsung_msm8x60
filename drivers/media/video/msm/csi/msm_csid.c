@@ -82,20 +82,6 @@ static int msm_csid_cid_lut(
 	return rc;
 }
 
-#if DBG_CSID
-static void msm_csid_set_debug_reg(void __iomem *csidbase,
-	struct msm_camera_csid_params *csid_params)
-{
-	uint32_t val = 0;
-	val = ((1 << csid_params->lane_cnt) - 1) << 20;
-	msm_camera_io_w(0x7f010800 | val, csidbase + CSID_IRQ_MASK_ADDR);
-	msm_camera_io_w(0x7f010800 | val, csidbase + CSID_IRQ_CLEAR_CMD_ADDR);
-}
-#else
-static void msm_csid_set_debug_reg(void __iomem *csidbase,
-	struct msm_camera_csid_params *csid_params) {}
-#endif
-
 static int msm_csid_config(struct csid_cfg_params *cfg_params)
 {
 	int rc = 0;
@@ -119,8 +105,10 @@ static int msm_csid_config(struct csid_cfg_params *cfg_params)
 	if (rc < 0)
 		return rc;
 
-	msm_csid_set_debug_reg(csidbase, csid_params);
+	msm_io_w(0x7fF10800, csidbase + CSID_IRQ_MASK_ADDR);
+	msm_io_w(0x7fF10800, csidbase + CSID_IRQ_CLEAR_CMD_ADDR);
 
+	msleep(20);
 	return rc;
 }
 
@@ -129,8 +117,7 @@ static irqreturn_t msm_csid_irq(int irq_num, void *data)
 	uint32_t irq;
 	struct csid_device *csid_dev = data;
 	irq = msm_io_r(csid_dev->base + CSID_IRQ_STATUS_ADDR);
-	CDBG("%s CSID%d_IRQ_STATUS_ADDR = 0x%x\n",
-		 __func__, csid_dev->pdev->id, irq);
+	CDBG("%s CSID_IRQ_STATUS_ADDR = 0x%x\n", __func__, irq);
 	msm_io_w(irq, csid_dev->base + CSID_IRQ_CLEAR_CMD_ADDR);
 	return IRQ_HANDLED;
 }
@@ -151,10 +138,6 @@ static struct msm_cam_clk_info csid_clk_info[] = {
 	{"csi_pclk", -1},
 };
 
-static struct camera_vreg_t csid_vreg_info[] = {
-	{"mipi_csi_vdd", REG_LDO, 1200000, 1200000, 20000},
-};
-
 static int msm_csid_init(struct v4l2_subdev *sd, uint32_t *csid_version)
 {
 	int rc = 0;
@@ -172,97 +155,54 @@ static int msm_csid_init(struct v4l2_subdev *sd, uint32_t *csid_version)
 		return rc;
 	}
 
-	rc = msm_camera_config_vreg(&csid_dev->pdev->dev, csid_vreg_info,
-		ARRAY_SIZE(csid_vreg_info), &csid_dev->csi_vdd, 1);
-	if (rc < 0) {
-		pr_err("%s: regulator on failed\n", __func__);
-		goto vreg_config_failed;
-	}
-
-	rc = msm_camera_enable_vreg(&csid_dev->pdev->dev, csid_vreg_info,
-		ARRAY_SIZE(csid_vreg_info), &csid_dev->csi_vdd, 1);
-	if (rc < 0) {
-		pr_err("%s: regulator enable failed\n", __func__);
-		goto vreg_enable_failed;
-	}
-
 	rc = msm_cam_clk_enable(&csid_dev->pdev->dev, csid_clk_info,
 		csid_dev->csid_clk, ARRAY_SIZE(csid_clk_info), 1);
 	if (rc < 0) {
-		pr_err("%s: regulator enable failed\n", __func__);
-		goto clk_enable_failed;
+		iounmap(csid_dev->base);
+		return rc;
 	}
 
-	csid_dev->hw_version =
-		msm_io_r(csid_dev->base + CSID_HW_VERSION_ADDR);
+#if DBG_CSID
+	enable_irq(csid_dev->irq->start);
+#endif
+
 	*csid_version = csid_dev->hw_version;
 
-	rc = request_irq(csid_dev->irq->start, msm_csid_irq,
-		IRQF_TRIGGER_RISING, "csid", csid_dev);
-	return rc;
-
-clk_enable_failed:
-	msm_camera_enable_vreg(&csid_dev->pdev->dev, csid_vreg_info,
-		ARRAY_SIZE(csid_vreg_info), &csid_dev->csi_vdd, 0);
-vreg_enable_failed:
-	msm_camera_config_vreg(&csid_dev->pdev->dev, csid_vreg_info,
-		ARRAY_SIZE(csid_vreg_info), &csid_dev->csi_vdd, 0);
-vreg_config_failed:
-	iounmap(csid_dev->base);
-	csid_dev->base = NULL;
-	return rc;
+	return 0;
 }
 
 static int msm_csid_release(struct v4l2_subdev *sd)
 {
-	uint32_t irq;
 	struct csid_device *csid_dev;
 	csid_dev = v4l2_get_subdevdata(sd);
 
-	irq = msm_io_r(csid_dev->base + CSID_IRQ_STATUS_ADDR);
-	msm_io_w(irq, csid_dev->base + CSID_IRQ_CLEAR_CMD_ADDR);
-	msm_io_w(0, csid_dev->base + CSID_IRQ_MASK_ADDR);
-
-	free_irq(csid_dev->irq->start, csid_dev);
+#if DBG_CSID
+	disable_irq(csid_dev->irq->start);
+#endif
 
 	msm_cam_clk_enable(&csid_dev->pdev->dev, csid_clk_info,
 		csid_dev->csid_clk, ARRAY_SIZE(csid_clk_info), 0);
 
-	msm_camera_enable_vreg(&csid_dev->pdev->dev, csid_vreg_info,
-		ARRAY_SIZE(csid_vreg_info), &csid_dev->csi_vdd, 0);
-
-	msm_camera_config_vreg(&csid_dev->pdev->dev, csid_vreg_info,
-		ARRAY_SIZE(csid_vreg_info), &csid_dev->csi_vdd, 0);
-
 	iounmap(csid_dev->base);
-	csid_dev->base = NULL;
 	return 0;
 }
 
 static long msm_csid_subdev_ioctl(struct v4l2_subdev *sd,
 			unsigned int cmd, void *arg)
 {
-	int rc = -ENOIOCTLCMD;
 	struct csid_cfg_params cfg_params;
-	struct csid_device *csid_dev = v4l2_get_subdevdata(sd);
-	mutex_lock(&csid_dev->mutex);
 	switch (cmd) {
 	case VIDIOC_MSM_CSID_CFG:
 		cfg_params.subdev = sd;
 		cfg_params.parms = arg;
-		rc = msm_csid_config((struct csid_cfg_params *)&cfg_params);
-		break;
+		return msm_csid_config((struct csid_cfg_params *)&cfg_params);
 	case VIDIOC_MSM_CSID_INIT:
-		rc = msm_csid_init(sd, (uint32_t *)arg);
-		break;
+		return msm_csid_init(sd, (uint32_t *)arg);
 	case VIDIOC_MSM_CSID_RELEASE:
-		rc = msm_csid_release(sd);
-		break;
+		return msm_csid_release(sd);
 	default:
-		pr_err("%s: command not found\n", __func__);
+		return -ENOIOCTLCMD;
 	}
-	mutex_unlock(&csid_dev->mutex);
-	return rc;
 }
 
 static struct v4l2_subdev_core_ops msm_csid_subdev_core_ops = {
@@ -311,6 +251,28 @@ static int __devinit csid_probe(struct platform_device *pdev)
 		rc = -EBUSY;
 		goto csid_no_resource;
 	}
+
+	rc = request_irq(new_csid_dev->irq->start, msm_csid_irq,
+		IRQF_TRIGGER_RISING, "csid", new_csid_dev);
+	if (rc < 0) {
+		release_mem_region(new_csid_dev->mem->start,
+			resource_size(new_csid_dev->mem));
+		pr_err("%s: irq request fail\n", __func__);
+		rc = -EBUSY;
+		goto csid_no_resource;
+	}
+	disable_irq(new_csid_dev->irq->start);
+
+	new_csid_dev->base = ioremap(new_csid_dev->mem->start,
+		resource_size(new_csid_dev->mem));
+	if (!new_csid_dev->base) {
+		rc = -ENOMEM;
+		goto csid_no_resource;
+	}
+
+	new_csid_dev->hw_version =
+		msm_io_r(new_csid_dev->base + CSID_HW_VERSION_ADDR);
+	iounmap(new_csid_dev->base);
 
 	new_csid_dev->pdev = pdev;
 	return 0;

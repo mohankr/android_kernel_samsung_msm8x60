@@ -164,10 +164,6 @@ struct msm_vpe_phy_info {
 	uint32_t sbuf_phy;
 	uint32_t y_phy;
 	uint32_t cbcr_phy;
-	uint32_t planar2_off;
-	uint32_t p0_phy;
-	uint32_t p1_phy;
-	uint32_t p2_phy;
 	uint8_t  output_id; /* VFE31_OUTPUT_MODE_PT/S/V */
 	uint32_t frame_id;
 };
@@ -199,17 +195,13 @@ struct msm_camera_csi2_params {
 	struct msm_camera_csiphy_params csiphy_params;
 };
 
-#ifndef CONFIG_MSM_CAMERA_V4L2
 #define VFE31_OUTPUT_MODE_PT (0x1 << 0)
 #define VFE31_OUTPUT_MODE_S (0x1 << 1)
 #define VFE31_OUTPUT_MODE_V (0x1 << 2)
 #define VFE31_OUTPUT_MODE_P (0x1 << 3)
 #define VFE31_OUTPUT_MODE_T (0x1 << 4)
-#define VFE31_OUTPUT_MODE_P_ALL_CHNLS (0x1 << 5)
-#endif
 
 #define CSI_EMBED_DATA 0x12
-#define CSI_RESERVED_DATA_0 0x13
 #define CSI_YUV422_8  0x1E
 #define CSI_RAW8    0x2A
 #define CSI_RAW10   0x2B
@@ -224,10 +216,6 @@ struct msm_vfe_phy_info {
 	uint32_t sbuf_phy;
 	uint32_t y_phy;
 	uint32_t cbcr_phy;
-	uint32_t planar2_off;
-	uint32_t p0_phy;
-	uint32_t p1_phy;
-	uint32_t p2_phy;
 	uint8_t  output_id; /* VFE31_OUTPUT_MODE_PT/S/V */
 	uint32_t frame_id;
 };
@@ -583,7 +571,6 @@ enum msm_camio_clk_type {
 	CAMIO_CSI0_PHY_CLK,
 	CAMIO_CSI1_PHY_CLK,
 	CAMIO_CSIPHY_TIMER_SRC_CLK,
-	CAMIO_IMEM_CLK,
 
 	CAMIO_MAX_CLK
 };
