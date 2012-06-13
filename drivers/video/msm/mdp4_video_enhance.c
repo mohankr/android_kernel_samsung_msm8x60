@@ -130,12 +130,20 @@ static int parse_text(char *src, int len)
 	int i,count, ret;
 	int index=0;
 	int j = 0;
-	char *str_line[300];
+	//char *str_line[300];
+  char **str_line;
 	char *sstart;
 	char *c;
 	unsigned int data1, data2, data3;
 	int	sharpvalue;
 
+  str_line =  kmalloc(sizeof(char *) * 300, GFP_KERNEL);
+  if (!str_line) {
+    kfree(str_line);
+    return -ENOMEM;
+  }
+  memset(str_line, 0, 300);
+  
 	c = src;
 	count = 0;
 	sstart = c;
@@ -177,6 +185,7 @@ static int parse_text(char *src, int len)
 			index++;
 		}
 	}
+	kfree(str_line);
 	return index;
 }
 

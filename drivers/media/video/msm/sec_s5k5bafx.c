@@ -191,15 +191,22 @@ static int s5k5bafx_i2c_write_burst_list(const u32 *list, int size, char *name)
 
 	u16 addr, value;
 	int len = 0;
-	u8 buf[BURST_MODE_BUFFER_MAX_SIZE] = {0,};
-	
-	struct i2c_msg msg = {
-		.addr = s5k5bafx_client->addr,
-		.flags = 0,
-		.len = 4,
-		.buf = buf,
-	};
+	//u8 buf[BURST_MODE_BUFFER_MAX_SIZE] = {0,};
+	u8 *buf;
+  int buf_freed = 0;
 
+	struct i2c_msg msg;
+
+	buf = kmalloc(sizeof(u8) * BURST_MODE_BUFFER_MAX_SIZE,
+                       GFP_KERNEL);
+  if (!buf) {
+    kfree(buf);
+    return -ENOMEM;
+  }
+  msg.addr = s5k5bafx_client->addr;
+  msg.flags = 0;
+  msg.len = 4;
+  msg.buf = buf;
 	
 	CAM_DEBUG("%s, size=%d",name, size);
 
@@ -237,6 +244,8 @@ static int s5k5bafx_i2c_write_burst_list(const u32 *list, int size, char *name)
 
 		default:
 			msg.len = 4;
+      kfree(buf);
+      buf_freed = 1;
 			*(u32 *)buf = cpu_to_be32(temp);
 			goto s5k5bafx_burst_write;
 		}
@@ -264,9 +273,15 @@ s5k5bafx_burst_write:
 
 	if (ret < 0) {
 		cam_err("fail to write registers!!\n");
+    if (!buf_freed) {
+      kfree(buf);
+    }
 		return -EIO;
 	}
 
+  if (!buf_freed) {
+    kfree(buf);
+  }
 	return 0;
 }
 #endif
