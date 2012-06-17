@@ -599,7 +599,7 @@ endif
 
 config KEYPAD_CYPRESS_TOUCH
 	tristate "Cypress touch keypad support"
-	default n
+	default y
 	help
 	  Say Y here if you want to use the Cypress touch keypad.
 
